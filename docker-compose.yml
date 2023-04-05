@@ -1,0 +1,47 @@
+version: '3.0'
+
+services:
+
+  redmine:
+    image: redmine:latest
+    restart: always
+    container_name: redmine
+    ports:
+      - "8080:3000"
+    environment:
+      REDMINE_DB_MYSQL: db
+      REDMINE_DB_PASSWORD: root
+      REDMINE_SECRET_KEY_BASE: root
+    volumes:
+      - redmine-data:/usr/src/redmine/files
+
+  db:
+    image: mysql:latest
+    restart: always
+    container_name: db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: redmine
+
+  webserver:
+    image: 'nginx:alpine'
+    working_dir: /var/www/html
+    container_name: webserver
+    restart: unless-stopped
+    volumes:
+      - './src:/var/www/html'
+      - './docker/default.conf:/etc/nginx/conf.d/default.conf'
+    ports:
+      - '80:80'
+
+  backend:
+    build: .
+    working_dir: /var/www/html
+    container_name: backend
+    restart: unless-stopped
+    volumes:
+      - './src:/var/www/html'
+      - './docker/php.ini:/usr/local/etc/php/conf.d/php-overrides.ini'
+
+volumes:
+  redmine-data:
